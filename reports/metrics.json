@@ -1,0 +1,27 @@
+{
+  "cv_auc": {
+    "logistic": 0.8055,
+    "xgboost": 0.785
+  },
+  "calibration_brier": {
+    "sigmoid": 0.1652,
+    "isotonic": 0.1675
+  },
+  "calibration_method_used": "sigmoid",
+  "holdout": {
+    "logistic_regression": {
+      "roc_auc": 0.8131,
+      "pr_auc": 0.7122,
+      "recall_pos": 0.575,
+      "precision_pos": 0.671,
+      "brier": 0.1652
+    },
+    "xgboost": {
+      "roc_auc": 0.7946,
+      "pr_auc": 0.6953,
+      "recall_pos": 0.569,
+      "precision_pos": 0.643,
+      "brier": 0.173
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "audit": [
+    {
+      "age_band": "21-30",
+      "n": 43,
+      "prevalence": 0.233,
+      "recall": 0.2,
+      "fpr": 0.091,
+      "precision": 0.4,
+      "selection_rate": 0.116
+    },
+    {
+      "age_band": "31-45",
+      "n": 365,
+      "prevalence": 0.332,
+      "recall": 0.512,
+      "fpr": 0.119,
+      "precision": 0.681,
+      "selection_rate": 0.249
+    },
+    {
+      "age_band": "46+",
+      "n": 92,
+      "prevalence": 0.467,
+      "recall": 0.837,
+      "fpr": 0.347,
+      "precision": 0.679,
+      "selection_rate": 0.576
+    }
+  ],
+  "group_fairness": {
+    "demographic_parity_gap": 0.46,
+    "equalized_odds_tpr_gap": 0.637,
+    "equalized_odds_fpr_gap": 0.256
+  },
+  "recall_gap_before": 0.637,
+  "recall_gap_after": 0.021,
+  "per_group_thresholds": {
+    "21-30": 0.277,
+    "31-45": 0.367,
+    "46+": 0.597
+  },
+  "target_recall": 0.7
+}

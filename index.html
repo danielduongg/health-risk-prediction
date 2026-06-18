@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diabetes Risk Estimator — live demo</title>
+<style>
+ :root{--bg:#0b0f17;--panel:#121826;--panel2:#0e1420;--line:#1f2a3c;--ink:#e8eef9;--mut:#8aa0bf;
+   --teal:#2dd4bf;--accent:#38bdf8;--warn:#ffb454;--lo:#27d08a;--mid:#ffb454;--hi:#ff5d6c;}
+ *{box-sizing:border-box}
+ body{margin:0;background:radial-gradient(1100px 650px at 75% -10%,#0e2a30 0%,var(--bg) 55%);color:var(--ink);
+   font:16px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+ .wrap{max-width:900px;margin:0 auto;padding:36px 20px 80px}
+ .eyebrow{letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:var(--teal);font-weight:700}
+ h1{font-size:29px;margin:.25em 0 .15em;line-height:1.15}
+ .sub{color:var(--mut);max-width:64ch}
+ .disc{margin-top:14px;border-left:3px solid var(--warn);background:#1a160c;padding:10px 14px;border-radius:0 10px 10px 0;color:#ecd9b0;font-size:13.5px}
+ .grid{display:grid;grid-template-columns:1.25fr .9fr;gap:18px;margin-top:22px}
+ @media(max-width:760px){.grid{grid-template-columns:1fr}}
+ .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:0 20px 50px -30px #000}
+ .row{margin:13px 0}
+ .row .lab{display:flex;justify-content:space-between;font-size:13.5px;color:var(--mut);margin-bottom:5px}
+ .row .lab b{color:var(--ink);font-variant-numeric:tabular-nums;font-size:15px}
+ input[type=range]{width:100%;accent-color:var(--teal);height:5px}
+ .presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+ .pz{font-size:12.5px;border:1px solid var(--line);background:#0c1422;color:var(--mut);padding:6px 11px;border-radius:999px;cursor:pointer}
+ .pz:hover{border-color:var(--teal);color:var(--ink)}
+ .gauge{text-align:center;padding:6px 0 2px}
+ .big{font-size:54px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+ .band{font-weight:700;letter-spacing:.04em;margin-top:8px;padding:6px 12px;border-radius:999px;display:inline-block;font-size:13.5px}
+ .meter{height:12px;border-radius:999px;background:#0a0f1a;border:1px solid var(--line);overflow:hidden;margin:16px 0 6px}
+ .fill{height:100%;transition:width .25s,background .25s}
+ .scale{display:flex;justify-content:space-between;font-size:11.5px;color:var(--mut)}
+ h2{font-size:15px;margin:18px 0 8px;color:var(--mut);font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+ .imp{display:flex;flex-direction:column;gap:7px}
+ .ib{display:grid;grid-template-columns:130px 1fr;align-items:center;gap:9px;font-size:13px;color:var(--mut)}
+ .ib .t{height:14px;background:#0a0f1a;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+ .ib .f{height:100%;background:linear-gradient(90deg,#2dd4bf,#38bdf8)}
+ .foot{margin-top:24px;color:var(--mut);font-size:13px;text-align:center}
+ a{color:var(--teal);text-decoration:none}a:hover{text-decoration:underline}
+</style></head>
+<body><div class="wrap">
+ <div class="eyebrow">health-risk-prediction · live demo</div>
+ <h1>Diabetes risk estimator</h1>
+ <p class="sub">The same <b>calibrated logistic-regression</b> model from the repo (held-out ROC-AUC 0.81, Brier 0.165), running entirely in your browser. Move the sliders; the probability is calibrated, so 30% really means ~30%.</p>
+ <div class="disc">⚠️ <b>Educational project on synthetic, Pima-style data — not a medical device and not medical advice.</b> Do not use for real clinical decisions.</div>
+
+ <div class="grid">
+  <div class="card">
+   <div class="presets" id="presets"></div>
+   <div id="sliders"></div>
+  </div>
+  <div class="card">
+   <div class="gauge">
+     <div class="big" id="pct">—</div>
+     <div class="band" id="band">—</div>
+   </div>
+   <div class="meter"><div class="fill" id="fill"></div></div>
+   <div class="scale"><span>0%</span><span>50%</span><span>100%</span></div>
+   <h2>What drives the model</h2>
+   <div class="imp" id="imp"></div>
+  </div>
+ </div>
+
+ <div class="foot">Calibrated logistic regression (5-fold Platt scaling) · features match the Pima Indians dataset · <a href="https://github.com/danielduongg/health-risk-prediction" target="_blank">source, model card &amp; fairness audit →</a></div>
+</div>
+<script>
+const M = {"features": ["Pregnancies", "Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"], "members": [{"median": [3.0, 119.0, 69.0, 23.0, 125.0, 32.4, 0.4345, 38.0], "mean": [2.986666666666667, 118.8325, 69.90833333333333, 24.139166666666668, 139.47833333333332, 32.312583333333336, 0.5114441666666666, 38.958333333333336], "scale": [1.7300738584105464, 31.406810998306298, 18.12098039719583, 11.0314610382709, 87.35570691463468, 6.547603886898033, 0.3535783956672676, 7.217681799272919], "coef": [0.3085272554829591, 1.1222388422481144, -0.036055638764077226, -0.04334516660928843, 0.01428297702570136, 0.6423207073330205, 0.2738748296373405, 0.5261766535454673], "intercept": -0.8480801915385762, "a": -1.001691770927628, "b": 0.014803927344841457}, {"median": [3.0, 119.0, 69.0, 24.0, 124.0, 32.4, 0.4245, 39.0], "mean": [3.0125, 118.91666666666667, 69.8475, 24.721666666666668, 140.38333333333333, 32.37125, 0.5052583333333333, 39.0625], "scale": [1.7693719460117292, 31.06693937648545, 18.295470580173664, 10.906994570254243, 91.2938646472052, 6.602445135768516, 0.36271307980811623, 7.34712599705944], "coef": [0.28495035223390225, 1.1167560573763358, -0.1257013313289211, -0.023801598186321053, 0.062275896270321464, 0.6432699857388845, 0.23834126111380063, 0.5919313984689122], "intercept": -0.8616777781269984, "a": -0.9635245120105017, "b": -0.09268172047185742}, {"median": [3.0, 119.0, 70.0, 24.0, 127.5, 31.9, 0.418, 38.0], "mean": [3.046666666666667, 119.29333333333334, 69.76166666666667, 24.793333333333333, 141.13916666666665, 31.98633333333333, 0.5007491666666667, 39.01166666666666], "scale": [1.7859140205757076, 30.83889247182669, 18.247050827158038, 10.840077900499097, 88.81628163033447, 6.512578589843572, 0.36893147003561366, 7.311967169571324], "coef": [0.3039933269320404, 1.114452483322894, -0.06357419419499875, 0.0877113498925433, 0.0923224160566565, 0.6378839556761795, 0.3266311840822545, 0.5971538723975182], "intercept": -0.8711936799883794, "a": -0.8559626345321528, "b": 0.07678841375450268}, {"median": [3.0, 119.0, 68.0, 24.0, 124.0, 32.3, 0.416, 38.0], "mean": [2.9716666666666667, 119.4625, 68.85083333333333, 24.885, 140.02833333333334, 32.208333333333336, 0.49985333333333337, 38.83416666666667], "scale": [1.7342233292040434, 31.101719037431568, 18.232944065771594, 11.10248207984743, 88.74180261046963, 6.506278805038168, 0.36340973912223223, 7.324047103359059], "coef": [0.2949889618180026, 1.0916027251423894, -0.0961181362973181, 0.04075892536441454, 0.11269534527738141, 0.6824159761635807, 0.23386687261171682, 0.5776808921918895], "intercept": -0.8580634635022926, "a": -0.9485983879483832, "b": 0.029657099576650255}, {"median": [3.0, 119.0, 68.0, 23.0, 127.0, 31.9, 0.4255, 38.0], "mean": [2.9891666666666667, 119.13833333333334, 69.00916666666667, 24.269166666666667, 140.21, 32.11533333333333, 0.5068583333333333, 38.873333333333335], "scale": [1.7250263685585279, 30.85653680970839, 18.05138266095487, 10.947071875112947, 84.96718523445782, 6.62779110178413, 0.3625078986687355, 7.381663468050785], "coef": [0.34379894878071743, 1.1027757833204985, -0.07183673029809469, 0.015042119363517606, 0.0005715624253666387, 0.6107516564687457, 0.29092810924731055, 0.5721306610611147], "intercept": -0.8539334794997321, "a": -0.9806818693260335, "b": 0.07396955013332031}], "ranges": [[0, 17, 2, 1], [44, 199, 117, 1], [24, 122, 72, 1], [0, 99, 23, 1], [0, 846, 80, 1], [18, 67, 32, 0.1], [0.08, 2.5, 0.47, 0.01], [21, 81, 33, 1]], "importance": {"Glucose": 0.42, "BMI": 0.2, "Age": 0.16, "DiabetesPedigreeFunction": 0.09, "Pregnancies": 0.06, "Insulin": 0.03, "BloodPressure": 0.02, "SkinThickness": 0.02}};
+const F = M.features, R = M.ranges;
+const LABELS = ["Pregnancies","Glucose (mg/dL)","Blood pressure (mm Hg)","Skin thickness (mm)","Insulin (μU/mL)","BMI","Diabetes pedigree","Age"];
+const PRESETS = {
+  "Average adult":      [2,117,72,23,80,32,0.47,33],
+  "Higher-risk":        [6,168,78,35,180,41,0.9,52],
+  "Lower-risk":         [1,92,66,20,60,24,0.2,26],
+  "Lean & young":       [0,95,64,18,55,22,0.2,24]
+};
+let vals = PRESETS["Average adult"].slice();
+
+function risk(x){
+  let out=0;
+  for(const m of M.members){
+    let s=m.intercept;
+    for(let i=0;i<F.length;i++){
+      const xi = (x[i]===''||isNaN(x[i]))? m.median[i] : x[i];
+      s += ((xi - m.mean[i])/m.scale[i]) * m.coef[i];
+    }
+    out += 1/(1+Math.exp(m.a*s + m.b));
+  }
+  return out/M.members.length;
+}
+function bandFor(p){
+  if(p<0.20) return ["LOW RISK","var(--lo)","rgba(39,208,138,.15)"];
+  if(p<0.50) return ["MODERATE RISK","var(--mid)","rgba(255,180,84,.15)"];
+  return ["HIGHER RISK","var(--hi)","rgba(255,93,108,.15)"];
+}
+function colFor(p){ return p<0.20?"#27d08a":p<0.5?"#ffb454":"#ff5d6c"; }
+
+function render(){
+  const p = risk(vals);
+  document.getElementById('pct').textContent=(p*100).toFixed(0)+'%';
+  document.getElementById('pct').style.color=colFor(p);
+  const [t,c,bg]=bandFor(p);
+  const b=document.getElementById('band'); b.textContent=t; b.style.color=c; b.style.background=bg;
+  const fl=document.getElementById('fill'); fl.style.width=(p*100).toFixed(1)+'%'; fl.style.background=colFor(p);
+}
+const sl=document.getElementById('sliders');
+F.forEach((f,i)=>{
+  const [mn,mx,df,st]=R[i];
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML=`<div class="lab"><span>${LABELS[i]}</span><b id="v${i}"></b></div>
+    <input type="range" id="s${i}" min="${mn}" max="${mx}" step="${st}" value="${vals[i]}">`;
+  sl.appendChild(row);
+  const inp=row.querySelector('input');
+  inp.addEventListener('input',()=>{vals[i]=parseFloat(inp.value);document.getElementById('v'+i).textContent=fmt(vals[i],st);render();});
+});
+function fmt(v,st){return st<1? v.toFixed(st<0.05?2:1): Math.round(v);}
+function setVals(arr){vals=arr.slice();F.forEach((f,i)=>{const s=document.getElementById('s'+i);s.value=vals[i];document.getElementById('v'+i).textContent=fmt(vals[i],R[i][3]);});render();}
+
+const pc=document.getElementById('presets');
+Object.keys(PRESETS).forEach(k=>{const c=document.createElement('span');c.className='pz';c.textContent=k;c.onclick=()=>setVals(PRESETS[k]);pc.appendChild(c);});
+
+const imp=document.getElementById('imp');
+const entries=Object.entries(M.importance).sort((a,b)=>b[1]-a[1]);const mx=entries[0][1];
+imp.innerHTML=entries.map(([k,v])=>`<div class="ib"><div>${k}</div><div class="t"><div class="f" style="width:${(v/mx*100).toFixed(0)}%"></div></div></div>`).join('');
+
+setVals(vals);
+</script>
+</body></html>
